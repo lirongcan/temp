@@ -1,4 +1,4 @@
-'''
+```
 public class LRU {
     static class Node{
         int key,value;
@@ -41,4 +41,4 @@ public class LRU {
         cache.add(new Node(key,value));
     }
 }
-'''
+```
