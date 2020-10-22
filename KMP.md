@@ -1,3 +1,4 @@
+```
 public class Kmp {
     //next表的构造
     private int[]next;
@@ -32,3 +33,4 @@ public class Kmp {
 
     }
 }
+```
