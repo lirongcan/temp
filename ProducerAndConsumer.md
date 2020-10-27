@@ -1,78 +1,72 @@
 ```
-class Goods{
-    private int id;
-    private String name;
-
-    Goods(int id,String name){
-        this.id=id;
-        this.name=name;
-    }
-}
-class Producer implements Runnable{
-    @Override
-    public void run() {
-        while(true){
-            try{
-                Thread.sleep(2000);
-            }catch (InterruptedException e){
-                e.printStackTrace();
-            }
-            synchronized (ProducerAndConsumer.queue){
-                Goods goods = new Goods(1, "first");
-                if(ProducerAndConsumer.queue.size()<ProducerAndConsumer.MAX_CONSUMER){
-                    ProducerAndConsumer.queue.add(goods);
-                    System.out.println(Thread.currentThread().getName()+" producing...");
-                }
-                else{
-                    try{
-                        ProducerAndConsumer.queue.wait();
-                    }
-                    catch (InterruptedException e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
+class Good {
+    static final int MAX_CONSUMER=5;
+    static final int MAX_PRODUCER=10;
+    static ReentrantLock lock=new ReentrantLock();
+    static Condition condition = lock.newCondition();
+    static LinkedList<Good> p=new LinkedList<>();
+    static private volatile int i=0;
+    String getId(){
+        i++;
+        return "good_"+String.valueOf(i);
     }
 }
 
-class Consumer implements Runnable{
+class producer implements Runnable{
     @Override
-    public void run() {
+    public void run(){
         while(true){
             try{
-                Thread.sleep(2000);
+                Good.lock.lock();
+                Thread.sleep(1000);
+                if(Good.p.size()< Good.MAX_CONSUMER){
+                    Good temp=new Good();
+                    Good.p.add(temp);
+                    System.out.println(Thread.currentThread().getName()+" is producing "+temp.getId());
+                    if(Good.p.size()==1) Good.condition.signal();
+                }
+                else Good.condition.await();
             }
-            catch (InterruptedException e){
+            catch(InterruptedException e){
                 e.printStackTrace();
             }
-            synchronized (ProducerAndConsumer.queue){
-                if(!ProducerAndConsumer.queue.isEmpty()){
-                    ProducerAndConsumer.queue.poll();
-                    System.out.println(Thread.currentThread().getName()+" consuming...");
-                }
-                else{
-                    ProducerAndConsumer.queue.notify();
-                }
+            finally {
+                Good.lock.unlock();
             }
         }
     }
 }
-public class ProducerAndConsumer {
-    static final int MAX_POOL=10;
-    static final int MAX_PRODUCER=5;
-    static final int MAX_CONSUMER=4;
-    static final Queue<Goods> queue=new ArrayBlockingQueue<>(MAX_POOL);
-    public static void test(){
-        Producer producer=new Producer();
-        Consumer consumer=new Consumer();
-        for (int i = 0; i < MAX_PRODUCER; i++) {
-            Thread threadA=new Thread(producer,"Producer"+i);
-            threadA.start();
+
+class consumer implements Runnable{
+    @Override
+    public void run(){
+        while(true){
+            try{
+                Good.lock.lock();
+                Thread.sleep(1000);
+                if(Good.p.size()>0){
+                    System.out.println(Thread.currentThread().getName()+" is consuming "+ Good.p.remove(0).getId());
+                    if(Good.p.size()==0) Good.condition.signal();
+                }
+                else Good.condition.await();
+            }
+            catch(InterruptedException e){
+                e.printStackTrace();
+            }
+            finally {
+                Good.lock.unlock();
+            }
         }
-        for (int i = 0; i < MAX_CONSUMER; i++) {
-            Thread threadB=new Thread(consumer,"Consumer"+i);
-            threadB.start();
+    }
+}
+
+public class ReentranLockProAndCon {
+    public void test(){
+        for (int i = 0; i < Good.MAX_CONSUMER; i++) {
+            new Thread(new consumer(), "Consumer"+String.valueOf(i)).start();
+        }
+        for (int i = 0; i < Good.MAX_PRODUCER; i++) {
+            new Thread(new producer(),"Producor"+String.valueOf(i)).start();
         }
     }
 }
