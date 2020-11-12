@@ -25,6 +25,7 @@ class lock{
     }
 }
 ```
+```
 class lock{
     //修改readers的锁
     semaphore mutex=1;
