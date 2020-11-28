@@ -19,7 +19,7 @@ select 课程号, 成绩 from score where 成绩<60 group by 课程号 order by 
 select 课程号, count(*)as '选修人数' from score group by 课程号 having count(*)>2 order by count(*)desc, 课程号asc;
 
 查询两门以上不合格课程的同学的学号, 以及不及格课程的平均成绩
-select 学号, avg(成绩) from (select 学号, 成绩 from score where 成绩<60) as 不及格名单 group by 学号 having count(成绩)>2;
+select 学号, avg(成绩) from (select 学号, 成绩 from score where 成绩<60) as 不及格名单 group by 学号 having count(成绩)>2);
 
 查询所有成绩小于60分学生的学号, 姓名
 select 学号, 姓名 from student where 学号 in (select 学号 from score group by 学号 having max(成绩)<60);
